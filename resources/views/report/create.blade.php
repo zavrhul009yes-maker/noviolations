@@ -6,6 +6,7 @@
     @Vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
+    <x-app-layout>
     <h1>Создание заявления</h1>
     
     <a href="{{ route('reports.index') }}">← Назад</a>
@@ -31,5 +32,6 @@
         
         <button type="submit">Создать</button>
     </form>
+</x-app-layout>
 </body>
 </html>

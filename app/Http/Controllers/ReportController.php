@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use App\Models\Status;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
@@ -20,10 +21,12 @@ class ReportController extends Controller
         ]);
         if ($validate) {
             $reports = Report::where('status_id', $status)
-                ->orderBy('created_at', $sort)
+                ->where('user_id' , Auth::user()->id)
+                ->orderBy('created_at' , $sort)
                 ->paginate(8);
         } else {
-            $reports = Report::orderBy('created_at', $sort)
+            $reports = Report::where('user_id' , Auth::user()->id)
+                ->orderBy('created_at' , $sort)
                 ->paginate(8);
         }
         $statuses = Status::all();
@@ -37,40 +40,87 @@ class ReportController extends Controller
         return view('report.create');
     }
 
-    public function store(Request $request)
+    public function store (Request $request, Report $report)
     {
-        $validated = $request->validate([
-            'number' => 'required|string|max:255',
-            'description' => 'required|string',
+        $data = $request->validate([
+            'number' => 'string',
+            'description' => 'string',
         ]);
+        $data['user_id'] = Auth::user()->id;
+        $data['status_id'] = 1 ;
 
-        Report::create($validated);
-
-        return redirect()->route('reports.index')->with('success', 'Заявление создано!');
+        $report -> create($data);
+        return redirect() -> back();
     }
 
 
     public function show(Report $report)
     {
-        return view('report.edit', compact('report'));
+        if (Auth::user()->id === $report->user_id) {
+            return view('report.edit', compact('report'));
+        }
+        else {
+            abort(403, 'У вас нет прав на редактирование этой записи.');
+        }
     }
 
     public function update(Request $request, Report $report)
     {
+        if (Auth::user()->id === $report->user_id) {
         $validated = $request->validate([
-            'number' => 'required|string|max:255',
-            'description' => 'required|string',
-        ]);
+            'number' => 'string',
+            'description' => 'string',
+        ]);}
+        else {
+            abort(403, 'У вас нет прав.');
+        }
 
         $report->update($validated);
 
-        return redirect()->route('reports.index')->with('success', 'Заявление обновлено!');
+        return redirect()->route('reports.index');
     }
 
 
     public function destroy(Report $report)
     {
-        $report->delete();
-        return redirect()->route('reports.index')->with('success', 'Заявление удалено!');
+        if (Auth::user()->id === $report -> user_id) {
+            $report->delete(); }
+        else {
+                abort(403,'У вас нет прав.');
+             }
+        return redirect()->route('reports.index');
     }
+
+    public function updateStatus(Request $request, Report $report)
+{
+    $report->update([
+        'status_id' => $request->status_id
+    ]);
+
+    return redirect()->back();
+
+    $request->validate([
+        'status_id' => 'required|exists:statuses,id'
+    ]);
+
+    $newStatus = Status::find($request->status_id);
+  
+    $currentStatus = $report->status;
+
+    if ($currentStatus->name !== 'новое') {
+        return redirect()->back();
+    }
+
+    if (!in_array($newStatus->name, ['подтверждено', 'отклонено'])) {
+        return redirect()->back();
+    }
+
+    $report->update([
+        'status_id' => $newStatus->id
+    ]);
+
+    return redirect()->back();
 }
+}
+
+

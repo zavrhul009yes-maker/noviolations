@@ -6,6 +6,7 @@
     @Vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
+    <x-app-layout>
     <h1>Редактирование заявления</h1>
     
     <a href="{{ route('reports.index') }}">← Назад</a>
@@ -38,5 +39,6 @@
         @method('DELETE')
         <button type="submit" onclick="return confirm('Вы уверены?')">Удалить</button>
     </form>
+</x-app-layout>
 </body>
 </html>

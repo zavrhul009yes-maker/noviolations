@@ -6,6 +6,7 @@
     @Vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
+    <x-app-layout>
     <div class="container">
         <h1>Список заявок</h1>
         
@@ -50,5 +51,6 @@
         @endforeach
         {{$reports->appends(request()->query())->links()}}
     </div>
+    </x-app-layout>
 </body>
 </html>
